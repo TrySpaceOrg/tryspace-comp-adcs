@@ -2,6 +2,9 @@
 #define ADCS_SIM_H
 
 #include <math.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 #include "adcs_device.h"
 #include "simulith.h"
 #include "simulith_component.h"
@@ -15,6 +18,19 @@
 #define ADCS_SIM_SUCCESS 0
 #define ADCS_SIM_ERROR  1
 
+// ADCS Controller Constants
+#define ADCS_CONTROLLER_UPDATE_RATE_HZ 5.0   // Controller update rate
+#define ADCS_SUN_POINT_KP 0.5               // Aggressive proportional gain
+#define ADCS_SUN_POINT_KD 0.1               // Aggressive derivative gain
+#define ADCS_WHEEL_MAX_TORQUE 0.005         // Max wheel torque updated to match SC_NOS3.txt
+#define ADCS_MTB_MAX_DIPOLE 1.42            // Max MTB dipole from SC_NOS3.txt
+#define ADCS_DETUMBLE_GAIN_BASE 0.01        // Moderate base detumble gain
+#define ADCS_DETUMBLE_GAIN_HIGH 0.02        // Moderate high rate detumble gain
+#define ADCS_WHEEL_DESAT_THRESHOLD 0.032    // Wheel momentum threshold for desaturation (80% of 0.04)
+#define ADCS_RATE_THRESHOLD 0.10            // Rate threshold - switch to hybrid (rad/s)
+#define ADCS_HIGH_RATE_THRESHOLD 0.5        // High rate threshold (rad/s)
+#define ADCS_ERROR_THRESHOLD 0.15           // Error threshold for fine pointing (rad)
+
 // Adcs simulator state
 typedef struct 
 {
@@ -27,13 +43,14 @@ typedef struct
     // Device specifics
     ADCS_Device_HK_tlm_t hk;
     ADCS_Device_Data_tlm_t data;
+    // ADCS Controller state
+    double last_control_time;
+    double prev_attitude_error[3];
+    int current_mode;
+    int controller_active;
 } adcs_sim_state_t;
 
-// Function declarations
-static void send_housekeeping(adcs_sim_state_t* state);
-static void send_adcs_data(adcs_sim_state_t* state);
-static void handle_command(adcs_sim_state_t* state, const uint8_t* data, size_t length);
-static void adcs_sim_on_tick(uint64_t tick_time_ns, const simulith_42_context_t* context_42);
+// Public API
 int adcs_sim_init(adcs_sim_state_t* state);
 void adcs_sim_cleanup(adcs_sim_state_t* state);
 

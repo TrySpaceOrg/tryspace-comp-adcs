@@ -80,7 +80,6 @@ void  ADCS_ReportDeviceTelemetry(void);
 void  ADCS_ResetCounters(void);
 void  ADCS_Enable(void);
 void  ADCS_Disable(void);
-void  ADCS_Configure(void);
 int32 ADCS_VerifyCmdLength(CFE_MSG_Message_t *msg, uint16 expected_length);
 
 #endif /* _ADCS_APP_H_ */

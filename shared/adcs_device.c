@@ -8,18 +8,27 @@ int32_t ADCS_ReadData(uart_info_t *device, uint8_t *read_data, uint8_t data_leng
     int32_t status             = OS_SUCCESS;
     int32_t bytes              = 0;
     int32_t bytes_available    = 0;
-    uint8_t ms_timeout_counter = 0;
+    /* Use a signed counter large enough for extended debug timeouts */
+    int32_t ms_timeout_counter = 0;
+    /* Allow longer timeouts when ADCS debug is enabled (helps simulated transports)
+     * Default timeout is ADCS_CFG_MS_TIMEOUT ms; in debug builds multiply to give
+     * the simulator more time to schedule component ticks and transport polling.
+     */
+    int32_t timeout_limit = ADCS_CFG_MS_TIMEOUT;
+#ifdef ADCS_CFG_DEBUG
+    timeout_limit = ADCS_CFG_MS_TIMEOUT * 10;
+#endif
 
     /* Wait until all data received or timeout occurs */
     bytes_available = uart_bytes_available(device);
-    while ((bytes_available < data_length) && (ms_timeout_counter < ADCS_CFG_MS_TIMEOUT))
+    while ((bytes_available < data_length) && (ms_timeout_counter < timeout_limit))
     {
         ms_timeout_counter++;
         OS_TaskDelay(1);
         bytes_available = uart_bytes_available(device);
     }
 
-    if (ms_timeout_counter < ADCS_CFG_MS_TIMEOUT)
+    if (ms_timeout_counter < timeout_limit)
     {
         /* Limit bytes available */
         if (bytes_available > data_length)
@@ -31,12 +40,15 @@ int32_t ADCS_ReadData(uart_info_t *device, uint8_t *read_data, uint8_t data_leng
         bytes = uart_read_port(device, read_data, bytes_available);
         if (bytes != bytes_available)
         {
-            OS_printf("  ADCS_ReadData: Bytes read != to requested! \n");
+            OS_printf("  ADCS_ReadData: Bytes read != to requested! read=%d expected=%d\n", bytes, bytes_available);
             status = OS_ERROR;
         } /* uart_read */
     }
     else
     {
+        #ifdef ADCS_CFG_DEBUG
+            OS_printf("  ADCS_ReadData: Timed out after %d ms waiting for %d bytes (debug timeout=%d)\n", ms_timeout_counter, data_length, timeout_limit);
+        #endif
         status = OS_ERROR;
     } /* ms_timeout_counter */
 
@@ -131,6 +143,16 @@ int32_t ADCS_RequestHK(uart_info_t *device, ADCS_Device_HK_tlm_t *data)
         status = ADCS_ReadData(device, read_data, sizeof(read_data));
         if (status == OS_SUCCESS)
         {
+#ifdef ADCS_CFG_DEBUG
+            /* Print the exact number of bytes expected and the raw hex we received */
+            OS_printf("ADCS_RequestHK: expected_size=%zu\n", sizeof(read_data));
+            OS_printf("ADCS_RequestHK: raw recv: ");
+            for (uint32_t i = 0; i < sizeof(read_data); i++)
+            {
+                OS_printf("%02X ", read_data[i]);
+            }
+            OS_printf("\n");
+#endif
             #ifdef ADCS_CFG_DEBUG
                 OS_printf("  ADCS_RequestHK = ");
                 for (uint32_t i = 0; i < sizeof(read_data); i++)
@@ -140,20 +162,77 @@ int32_t ADCS_RequestHK(uart_info_t *device, ADCS_Device_HK_tlm_t *data)
                 OS_printf("\n");
             #endif
 
-            /* Verify data header and trailer */
+            /* Verify header/trailer */
             if ((read_data[0] == ADCS_DEVICE_HDR_0) && (read_data[1] == ADCS_DEVICE_HDR_1) &&
-                (read_data[6] == ADCS_DEVICE_TRAILER_0) && (read_data[7] == ADCS_DEVICE_TRAILER_1))
+                (read_data[ADCS_DEVICE_HK_SIZE - 2] == ADCS_DEVICE_TRAILER_0) &&
+                (read_data[ADCS_DEVICE_HK_SIZE - 1] == ADCS_DEVICE_TRAILER_1))
             {
-                data->DeviceCounter |= read_data[2] << 8;
-                data->DeviceCounter |= read_data[3];
-                data->DeviceConfig  |= read_data[4] << 8;
-                data->DeviceConfig  |= read_data[5];
-                #ifdef ADCS_CFG_DEBUG
-                    OS_printf("  Header  = 0x%02x%02x  \n", read_data[0], read_data[1]);
-                    OS_printf("  Counter = 0x%04x      \n", data->DeviceCounter);
-                    OS_printf("  Config  = 0x%04x      \n", data->DeviceConfig);
-                    OS_printf("  Trailer = 0x%02x%02x  \n", read_data[6], read_data[7]);
-                #endif
+                /* Parse big-endian wire format per README */
+                uint8_t *ptr = &read_data[2]; /* skip header (2 bytes) */
+
+                data->DeviceCounter = ((uint16_t)ptr[0] << 8) | ptr[1];
+                ptr += 2;
+
+                data->Mode = ptr[0];
+                ptr += 1;
+
+                data->GpsSeconds = ((uint32_t)ptr[0] << 24) | ((uint32_t)ptr[1] << 16) | ((uint32_t)ptr[2] << 8) | ptr[3];
+                ptr += 4;
+
+                data->GpsSubseconds = ((uint32_t)ptr[0] << 24) | ((uint32_t)ptr[1] << 16) | ((uint32_t)ptr[2] << 8) | ptr[3];
+                ptr += 4;
+
+                /* Helper to convert big-endian 4 bytes to float */
+                for (int i = 0; i < 3; i++)
+                {
+                    uint32_t u = ((uint32_t)ptr[0] << 24) | ((uint32_t)ptr[1] << 16) | ((uint32_t)ptr[2] << 8) | ptr[3];
+                    float f;
+                    memcpy(&f, &u, sizeof(f));
+                    data->GpsPosition[i] = f;
+                    ptr += 4;
+                }
+
+                for (int i = 0; i < 3; i++)
+                {
+                    uint32_t u = ((uint32_t)ptr[0] << 24) | ((uint32_t)ptr[1] << 16) | ((uint32_t)ptr[2] << 8) | ptr[3];
+                    float f;
+                    memcpy(&f, &u, sizeof(f));
+                    data->Velocity[i] = f;
+                    ptr += 4;
+                }
+
+                data->AttitudeSource = ptr[0];
+                ptr += 1;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    uint32_t u = ((uint32_t)ptr[0] << 24) | ((uint32_t)ptr[1] << 16) | ((uint32_t)ptr[2] << 8) | ptr[3];
+                    float f;
+                    memcpy(&f, &u, sizeof(f));
+                    data->AngRate[i] = f;
+                    ptr += 4;
+                }
+
+                for (int i = 0; i < 4; i++)
+                {
+                    uint32_t u = ((uint32_t)ptr[0] << 24) | ((uint32_t)ptr[1] << 16) | ((uint32_t)ptr[2] << 8) | ptr[3];
+                    float f;
+                    memcpy(&f, &u, sizeof(f));
+                    data->Quaternion[i] = f;
+                    ptr += 4;
+                }
+
+                data->Eclipse = ptr[0];
+                ptr += 1;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    uint32_t u = ((uint32_t)ptr[0] << 24) | ((uint32_t)ptr[1] << 16) | ((uint32_t)ptr[2] << 8) | ptr[3];
+                    float f;
+                    memcpy(&f, &u, sizeof(f));
+                    data->SunVectorBody[i] = f;
+                    ptr += 4;
+                }
             }
             else
             {
@@ -172,13 +251,13 @@ int32_t ADCS_RequestHK(uart_info_t *device, ADCS_Device_HK_tlm_t *data)
 /*
 ** Request data command
 */
-int32_t ADCS_RequestData(uart_info_t *device, ADCS_Device_Data_tlm_t *data)
+int32_t ADCS_RequestData(uart_info_t *device, ADCS_Device_Data_tlm_t *data, uint16_t data_cmd)
 {
     int32_t status = OS_SUCCESS;
     uint8_t read_data[ADCS_DEVICE_DATA_SIZE];
 
-    /* Command device to send HK */
-    status = ADCS_CommandDevice(device, ADCS_DEVICE_REQ_DATA_CMD, 0);
+    /* Command device to request a specific data frame */
+    status = ADCS_CommandDevice(device, data_cmd, 0);
     if (status == OS_SUCCESS)
     {
         /* Read HK data */
@@ -224,4 +303,22 @@ int32_t ADCS_RequestData(uart_info_t *device, ADCS_Device_Data_tlm_t *data)
         OS_printf("  ADCS_RequestData: ADCS_CommandDevice reported error %d \n", status);
     }
     return status;
+}
+
+/* Pretty-print housekeeping structure to stdout */
+void ADCS_PrintHK(const ADCS_Device_HK_tlm_t *hk)
+{
+    if (!hk) return;
+    printf("ADCS Housekeeping:\n");
+    printf("  DeviceCounter : %u\n", hk->DeviceCounter);
+    printf("  Mode          : %u\n", hk->Mode);
+    printf("  GpsSeconds    : %u\n", hk->GpsSeconds);
+    printf("  GpsSubseconds : %u\n", hk->GpsSubseconds);
+    printf("  GpsPosition   : %.6f, %.6f, %.6f\n", hk->GpsPosition[0], hk->GpsPosition[1], hk->GpsPosition[2]);
+    printf("  Velocity      : %.6f, %.6f, %.6f\n", hk->Velocity[0], hk->Velocity[1], hk->Velocity[2]);
+    printf("  AttitudeSrc   : %u\n", hk->AttitudeSource);
+    printf("  AngRate       : %.6f, %.6f, %.6f\n", hk->AngRate[0], hk->AngRate[1], hk->AngRate[2]);
+    printf("  Quaternion    : %.6f, %.6f, %.6f, %.6f\n", hk->Quaternion[0], hk->Quaternion[1], hk->Quaternion[2], hk->Quaternion[3]);
+    printf("  Eclipse       : %u\n", hk->Eclipse);
+    printf("  SunVectorBody : %.6f, %.6f, %.6f\n", hk->SunVectorBody[0], hk->SunVectorBody[1], hk->SunVectorBody[2]);
 }

@@ -32,10 +32,14 @@ void print_help(void)
                   "  n                                - ^                               \n"
                   "hk                                 - Request device housekeeping     \n"
                   "  h                                - ^                               \n"
-                  "adcs                               - Request adcs data               \n"
+                  "adcs                               - Request adcs (CSS) data         \n"
                   "  s                                - ^                               \n"
-                  "cfg #                              - Send configuration #            \n"
-                  "  c #                              - ^                               \n"
+                  "mode #                             - Set ADCS mode (0..5)           \n"
+                  "  m #                              - ^                               \n"
+                  "target #                           - Set target id/value            \n"
+                  "  t #                              - ^                               \n"
+                  "css                                - Request CSS sensor data        \n"
+                  "  css                              - ^                               \n"
                   "\n");
 }
 
@@ -80,14 +84,27 @@ int get_command(const char *str)
     {
         status = CMD_ADCS;
     }
-    else if (strcmp(lcmd, "cfg") == 0)
+    else if (strcmp(lcmd, "mode") == 0)
     {
-        status = CMD_CFG;
+        status = CMD_SET_MODE;
     }
-    else if (strcmp(lcmd, "c") == 0)
+    else if (strcmp(lcmd, "m") == 0)
     {
-        status = CMD_CFG;
+        status = CMD_SET_MODE;
     }
+    else if (strcmp(lcmd, "target") == 0)
+    {
+        status = CMD_SET_TARGET;
+    }
+    else if (strcmp(lcmd, "t") == 0)
+    {
+        status = CMD_SET_TARGET;
+    }
+    else if (strcmp(lcmd, "css") == 0)
+    {
+        status = CMD_GET_CSS;
+    }
+    /* 'cfg' command removed - configuration now uses set mode/target */
     return status;
 }
 
@@ -95,7 +112,6 @@ int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_IN
 {
     int32_t  status      = OS_SUCCESS;
     int32_t  exit_status = OS_SUCCESS;
-    uint32_t config;
 
     /* Process command */
     switch (cc)
@@ -130,6 +146,7 @@ int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_IN
                 if (status == OS_SUCCESS)
                 {
                     OS_printf("ADCS_RequestHK command success\n");
+                    ADCS_PrintHK(&AdcsHK);
                 }
                 else
                 {
@@ -141,10 +158,10 @@ int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_IN
         case CMD_ADCS:
             if (check_number_arguments(num_tokens, 0) == OS_SUCCESS)
             {
-                status = ADCS_RequestData(&AdcsUart, &AdcsData);
+                status = ADCS_RequestData(&AdcsUart, &AdcsData, ADCS_DEVICE_GET_CSS_CMD);
                 if (status == OS_SUCCESS)
                 {
-                    OS_printf("ADCS_RequestData command success\n");
+                    OS_printf("ADCS_RequestData (CSS) command success\n");
                 }
                 else
                 {
@@ -153,18 +170,49 @@ int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_IN
             }
             break;
 
-        case CMD_CFG:
+        case CMD_SET_MODE:
             if (check_number_arguments(num_tokens, 1) == OS_SUCCESS)
             {
-                config = atoi(tokens[0]);
-                status = ADCS_CommandDevice(&AdcsUart, ADCS_DEVICE_CFG_CMD, config);
+                uint16_t mode = (uint16_t)atoi(tokens[0]);
+                status = ADCS_CommandDevice(&AdcsUart, ADCS_DEVICE_SET_MODE_CMD, mode);
                 if (status == OS_SUCCESS)
                 {
-                    OS_printf("Configuration command success with value %u\n", config);
+                    OS_printf("Set mode command success (mode=%u)\n", mode);
                 }
                 else
                 {
-                    OS_printf("Configuration command failed!\n");
+                    OS_printf("Set mode command failed!\n");
+                }
+            }
+            break;
+
+        case CMD_SET_TARGET:
+            if (check_number_arguments(num_tokens, 1) == OS_SUCCESS)
+            {
+                uint16_t target = (uint16_t)atoi(tokens[0]);
+                status = ADCS_CommandDevice(&AdcsUart, ADCS_DEVICE_SET_TARGET_CMD, target);
+                if (status == OS_SUCCESS)
+                {
+                    OS_printf("Set target command success (target=%u)\n", target);
+                }
+                else
+                {
+                    OS_printf("Set target command failed!\n");
+                }
+            }
+            break;
+
+        case CMD_GET_CSS:
+            if (check_number_arguments(num_tokens, 0) == OS_SUCCESS)
+            {
+                status = ADCS_RequestData(&AdcsUart, &AdcsData, ADCS_DEVICE_GET_CSS_CMD);
+                if (status == OS_SUCCESS)
+                {
+                    OS_printf("CSS data request success\n");
+                }
+                else
+                {
+                    OS_printf("CSS data request failed!\n");
                 }
             }
             break;

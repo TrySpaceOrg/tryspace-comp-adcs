@@ -12,6 +12,9 @@
 #define ADCS_ENABLE_CC         2
 #define ADCS_DISABLE_CC        3
 #define ADCS_CONFIG_CC         4
+#define ADCS_SET_MODE_CC       5
+#define ADCS_SET_TARGET_CC     6
+#define ADCS_GET_CSS_CC        7
 
 /*
 ** Telemetry Request Command Codes
@@ -28,15 +31,23 @@ typedef struct
 
 } ADCS_NoArgs_cmd_t;
 
-/*
-** ADCS write configuration command
-*/
+/* Set Mode command (payload: uint16 mode) */
 typedef struct
 {
     CFE_MSG_CommandHeader_t CmdHeader;
-    uint16                  DeviceCfg;
+    uint16                  Mode;
 
-} ADCS_Config_cmd_t;
+} ADCS_SetMode_cmd_t;
+
+/* Set Target command (payload: uint16 target id/value) */
+typedef struct
+{
+    CFE_MSG_CommandHeader_t CmdHeader;
+    uint16                  Target;
+
+} ADCS_SetTarget_cmd_t;
+
+/* Get CSS / sensor data command has no additional args */
 
 /*
 ** ADCS device telemetry definition
