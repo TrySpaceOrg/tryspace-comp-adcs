@@ -319,7 +319,7 @@ void Test_ADCS_ProcessGroundCommand(void)
         ADCS_NoArgs_cmd_t Reset;
         ADCS_NoArgs_cmd_t Enable;
         ADCS_NoArgs_cmd_t Disable;
-        ADCS_Config_cmd_t Config;
+        ADCS_SetMode_cmd_t Config;
     } TestMsg;
     UT_CheckEvent_t EventTest;
 
@@ -422,46 +422,7 @@ void Test_ADCS_ProcessGroundCommand(void)
     UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
     UT_CheckEvent_Setup(&EventTest, ADCS_LEN_ERR_EID, NULL);
     ADCS_ProcessGroundCommand();
-    UtAssert_True(EventTest.MatchCount == 1, "ADCS_LEN_ERR_EID generated (%u)", (unsigned int)EventTest.MatchCount);
-
-    /* test dispatch of CONFIG */
-    FcnCode = ADCS_CONFIG_CC;
-    Size    = sizeof(TestMsg.Config);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &Size, sizeof(Size), false);
-    UT_CheckEvent_Setup(&EventTest, ADCS_CMD_CONFIG_INF_EID, NULL);
-    UT_SetDeferredRetcode(UT_KEY(ADCS_CommandDevice), 1, OS_ERROR);
-    CFE_MSG_Message_t msgPtr;
-    ADCS_AppData.MsgPtr = &msgPtr;
-    ADCS_ProcessGroundCommand();
-    // UtAssert_True(EventTest.MatchCount == 1, "ADCS_CMD_CONFIG_INF_EID generated (%u)",
-    //               (unsigned int)EventTest.MatchCount);
-
-    /* test failure of command length */
-    FcnCode = ADCS_CONFIG_CC;
-    Size    = sizeof(TestMsg.Reset);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &Size, sizeof(Size), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_CheckEvent_Setup(&EventTest, ADCS_LEN_ERR_EID, NULL);
-    ADCS_ProcessGroundCommand();
-    UtAssert_True(EventTest.MatchCount == 1, "ADCS_LEN_ERR_EID generated (%u)", (unsigned int)EventTest.MatchCount);
-
-    FcnCode = ADCS_CONFIG_CC;
-    Size    = sizeof(TestMsg.Config);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &Size, sizeof(Size), false);
-    UT_CheckEvent_Setup(&EventTest, ADCS_CMD_CONFIG_INF_EID, NULL);
-    UT_SetDeferredRetcode(UT_KEY(ADCS_CommandDevice), 1, OS_SUCCESS);
-    ADCS_AppData.MsgPtr = &msgPtr;
-    ADCS_ProcessGroundCommand();
-    // UtAssert_True(EventTest.MatchCount == 1, "ADCS_CMD_CONFIG_INF_EID generated (%u)",
-    //               (unsigned int)EventTest.MatchCount);
-    
+    UtAssert_True(EventTest.MatchCount == 1, "ADCS_LEN_ERR_EID generated (%u)", (unsigned int)EventTest.MatchCount);    
 
     /* test an invalid CC */
     FcnCode = 99;
@@ -570,24 +531,6 @@ void Test_ADCS_ReportDeviceTelemetry(void)
     ADCS_ReportDeviceTelemetry();
 }
 
-void Test_ADCS_Configure(void)
-{
-    ADCS_Configure();
-
-    ADCS_Config_cmd_t command;
-    ADCS_AppData.MsgPtr                                     = (CFE_MSG_Message_t *)&command;
-    ((ADCS_Config_cmd_t *)ADCS_AppData.MsgPtr)->DeviceCfg = 0xFFFF;
-    ADCS_Configure();
-
-    ((ADCS_Config_cmd_t *)ADCS_AppData.MsgPtr)->DeviceCfg = 0x0;
-    ADCS_AppData.HkTelemetryPkt.DeviceEnabled               = ADCS_DEVICE_ENABLED;
-    ADCS_Configure();
-
-    UT_SetDeferredRetcode(UT_KEY(ADCS_CommandDevice), 1, OS_ERROR);
-    ADCS_AppData.HkTelemetryPkt.DeviceEnabled = ADCS_DEVICE_ENABLED;
-    ADCS_Configure();
-}
-
 void Test_ADCS_Enable(void)
 {
     UT_CheckEvent_t EventTest;
@@ -663,7 +606,6 @@ void UtTest_Setup(void)
     ADD_TEST(ADCS_VerifyCmdLength);
     ADD_TEST(ADCS_ReportDeviceTelemetry);
     ADD_TEST(ADCS_ProcessTelemetryRequest);
-    ADD_TEST(ADCS_Configure);
     ADD_TEST(ADCS_Enable);
     ADD_TEST(ADCS_Disable);
 }

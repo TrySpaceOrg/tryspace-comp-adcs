@@ -44,7 +44,7 @@
 typedef struct
 {
     uint16_t DeviceCounter;       /* command counter */
-    uint16_t Target;              /* internal: last set target (not serialized) */
+    uint16_t Target;              /* last set target (serialized in device HK frame) */
     uint8_t  Mode;                /* operation mode */
     uint32_t GpsSeconds;          /* GPS seconds */
     uint32_t GpsSubseconds;       /* GPS subseconds */

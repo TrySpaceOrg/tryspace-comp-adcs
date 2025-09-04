@@ -16,17 +16,28 @@
 
       <!-- 16-bit values used by the device (matches adcs_device.h) -->
       <xtce:IntegerParameterType name="UINT16_BE_Type" signed="false">
+        <!-- Yamcs requires 'mostSignificantByteFirst' (shorthand 'BE' not accepted) -->
         <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned" byteOrder="mostSignificantByteFirst"/>
       </xtce:IntegerParameterType>
 
-      <!-- 32-bit values when needed (big-endian wire format used by ADCS sim) -->
-      <xtce:IntegerParameterType name="UINT32_Type" signed="false">
+      <!-- 32-bit values big-endian (device raw frame) -->
+      <xtce:IntegerParameterType name="UINT32_BE_Type" signed="false">
         <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned" byteOrder="mostSignificantByteFirst"/>
       </xtce:IntegerParameterType>
 
-      <!-- 32-bit IEEE-754 floats -->
-      <xtce:FloatParameterType name="FLOAT32_Type">
+      <!-- 32-bit values little-endian (as emitted by cFE HK packet host order) -->
+      <xtce:IntegerParameterType name="UINT32_LE_Type" signed="false">
+        <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned" byteOrder="leastSignificantByteFirst"/>
+      </xtce:IntegerParameterType>
+
+      <!-- 32-bit IEEE-754 floats big-endian (device raw frame) -->
+      <xtce:FloatParameterType name="FLOAT32_BE_Type">
         <xtce:FloatDataEncoding sizeInBits="32" encoding="IEEE754_1985" byteOrder="mostSignificantByteFirst"/>
+      </xtce:FloatParameterType>
+
+      <!-- 32-bit IEEE-754 floats little-endian (cFE HK packet) -->
+      <xtce:FloatParameterType name="FLOAT32_LE_Type">
+        <xtce:FloatDataEncoding sizeInBits="32" encoding="IEEE754_1985" byteOrder="leastSignificantByteFirst"/>
       </xtce:FloatParameterType>
 
       <!-- Device enabled enumerated -->
@@ -48,29 +59,30 @@
       <xtce:Parameter name="DEVICE_ENABLED" parameterTypeRef="UINT8_Type"/>
 
       <!-- Device HK fields (matches ADCS_Device_HK_tlm_t struct layout) -->
-      <xtce:Parameter name="DEVICE_COUNTER" parameterTypeRef="UINT16_BE_Type"/>
-      <xtce:Parameter name="TARGET" parameterTypeRef="UINT16_BE_Type"/>
+  <!-- NOTE: In the cFE HK packet, multi-byte fields are in host (little-endian) order -->
+  <xtce:Parameter name="DEVICE_COUNTER" parameterTypeRef="UINT16_Type"/>
+  <xtce:Parameter name="TARGET" parameterTypeRef="UINT16_Type"/>
       <xtce:Parameter name="MODE" parameterTypeRef="UINT8_Type"/>
-      <xtce:Parameter name="GPS_SECONDS" parameterTypeRef="UINT32_Type"/>
-      <xtce:Parameter name="GPS_SUBSECONDS" parameterTypeRef="UINT32_Type"/>
-      <xtce:Parameter name="GPS_POS_X" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="GPS_POS_Y" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="GPS_POS_Z" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="VEL_X" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="VEL_Y" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="VEL_Z" parameterTypeRef="FLOAT32_Type"/>
+  <xtce:Parameter name="GPS_SECONDS" parameterTypeRef="UINT32_LE_Type"/>
+  <xtce:Parameter name="GPS_SUBSECONDS" parameterTypeRef="UINT32_LE_Type"/>
+  <xtce:Parameter name="GPS_POS_X" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="GPS_POS_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="GPS_POS_Z" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="VEL_X" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="VEL_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="VEL_Z" parameterTypeRef="FLOAT32_LE_Type"/>
       <xtce:Parameter name="ATTITUDE_SOURCE" parameterTypeRef="UINT8_Type"/>
-      <xtce:Parameter name="ANGRATE_X" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="ANGRATE_Y" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="ANGRATE_Z" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="QUAT_0" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="QUAT_1" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="QUAT_2" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="QUAT_3" parameterTypeRef="FLOAT32_Type"/>
+  <xtce:Parameter name="ANGRATE_X" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="ANGRATE_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="ANGRATE_Z" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="QUAT_0" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="QUAT_1" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="QUAT_2" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="QUAT_3" parameterTypeRef="FLOAT32_LE_Type"/>
       <xtce:Parameter name="ECLIPSE" parameterTypeRef="UINT8_Type"/>
-      <xtce:Parameter name="SUN_X" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="SUN_Y" parameterTypeRef="FLOAT32_Type"/>
-      <xtce:Parameter name="SUN_Z" parameterTypeRef="FLOAT32_Type"/>
+  <xtce:Parameter name="SUN_X" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="SUN_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+  <xtce:Parameter name="SUN_Z" parameterTypeRef="FLOAT32_LE_Type"/>
     </xtce:ParameterSet>
 
     <xtce:ContainerSet>
@@ -83,42 +95,6 @@
           <xtce:RestrictionCriteria>
             <xtce:ComparisonList>
               <xtce:Comparison parameterRef="/CCSDS/CCSDS_STREAMID" value="0x08D5"/>
-            </xtce:ComparisonList>
-          </xtce:RestrictionCriteria>
-        </xtce:BaseContainer>
-      </xtce:SequenceContainer>
-
-      <!-- Device-level housekeeping container: maps the raw device packet payload (starts at DEVICE_COUNTER) -->
-      <xtce:SequenceContainer name="ADCS_DEVICE_HK_TLM" shortDescription="ADCS_Device_HK_tlm_t (raw device payload)">
-        <xtce:EntryList>
-          <xtce:ParameterRefEntry parameterRef="DEVICE_COUNTER"/>
-          <xtce:ParameterRefEntry parameterRef="TARGET"/>
-          <xtce:ParameterRefEntry parameterRef="MODE"/>
-          <xtce:ParameterRefEntry parameterRef="GPS_SECONDS"/>
-          <xtce:ParameterRefEntry parameterRef="GPS_SUBSECONDS"/>
-          <xtce:ParameterRefEntry parameterRef="GPS_POS_X"/>
-          <xtce:ParameterRefEntry parameterRef="GPS_POS_Y"/>
-          <xtce:ParameterRefEntry parameterRef="GPS_POS_Z"/>
-          <xtce:ParameterRefEntry parameterRef="VEL_X"/>
-          <xtce:ParameterRefEntry parameterRef="VEL_Y"/>
-          <xtce:ParameterRefEntry parameterRef="VEL_Z"/>
-          <xtce:ParameterRefEntry parameterRef="ATTITUDE_SOURCE"/>
-          <xtce:ParameterRefEntry parameterRef="ANGRATE_X"/>
-          <xtce:ParameterRefEntry parameterRef="ANGRATE_Y"/>
-          <xtce:ParameterRefEntry parameterRef="ANGRATE_Z"/>
-          <xtce:ParameterRefEntry parameterRef="QUAT_0"/>
-          <xtce:ParameterRefEntry parameterRef="QUAT_1"/>
-          <xtce:ParameterRefEntry parameterRef="QUAT_2"/>
-          <xtce:ParameterRefEntry parameterRef="QUAT_3"/>
-          <xtce:ParameterRefEntry parameterRef="ECLIPSE"/>
-          <xtce:ParameterRefEntry parameterRef="SUN_X"/>
-          <xtce:ParameterRefEntry parameterRef="SUN_Y"/>
-          <xtce:ParameterRefEntry parameterRef="SUN_Z"/>
-        </xtce:EntryList>
-        <xtce:BaseContainer containerRef="/CCSDS/CCSDS_TM">
-          <xtce:RestrictionCriteria>
-            <xtce:ComparisonList>
-              <xtce:Comparison parameterRef="/CCSDS/CCSDS_STREAMID" value="0x08D4"/>
             </xtce:ComparisonList>
           </xtce:RestrictionCriteria>
         </xtce:BaseContainer>
@@ -159,6 +135,13 @@
           <xtce:ParameterRefEntry parameterRef="SUN_Y"/>
           <xtce:ParameterRefEntry parameterRef="SUN_Z"/>
         </xtce:EntryList>
+        <xtce:BaseContainer containerRef="/CCSDS/CCSDS_TM">
+          <xtce:RestrictionCriteria>
+            <xtce:ComparisonList>
+              <xtce:Comparison parameterRef="/CCSDS/CCSDS_STREAMID" value="0x08D4"/>
+            </xtce:ComparisonList>
+          </xtce:RestrictionCriteria>
+        </xtce:BaseContainer>
       </xtce:SequenceContainer>
     </xtce:ContainerSet>
   </xtce:TelemetryMetaData>

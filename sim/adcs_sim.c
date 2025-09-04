@@ -490,7 +490,7 @@ static void send_housekeeping(adcs_sim_state_t* state)
     ptr[1] = state->hk.DeviceCounter & 0xFF;
     ptr += 2;
 
-    /* Target (uint16 big-endian) - present in ADCS_Device_HK_tlm_t */
+    /* Target (uint16 big-endian) */
     ptr[0] = (state->hk.Target >> 8) & 0xFF;
     ptr[1] = state->hk.Target & 0xFF;
     ptr += 2;
@@ -502,22 +502,37 @@ static void send_housekeeping(adcs_sim_state_t* state)
     /* GpsSeconds, GpsSubseconds (uint32 big-endian) */
     uint32_t u32;
     u32 = state->hk.GpsSeconds;
-    ptr[0] = (u32 >> 24) & 0xFF; ptr[1] = (u32 >> 16) & 0xFF; ptr[2] = (u32 >> 8) & 0xFF; ptr[3] = u32 & 0xFF; ptr += 4;
+    ptr[0] = (u32 >> 24) & 0xFF; 
+    ptr[1] = (u32 >> 16) & 0xFF; 
+    ptr[2] = (u32 >> 8) & 0xFF; 
+    ptr[3] = u32 & 0xFF; 
+    ptr += 4;
     u32 = state->hk.GpsSubseconds;
-    ptr[0] = (u32 >> 24) & 0xFF; ptr[1] = (u32 >> 16) & 0xFF; ptr[2] = (u32 >> 8) & 0xFF; ptr[3] = u32 & 0xFF; ptr += 4;
-
-    /* Helper to write float as big-endian */
+    ptr[0] = (u32 >> 24) & 0xFF; 
+    ptr[1] = (u32 >> 16) & 0xFF; 
+    ptr[2] = (u32 >> 8) & 0xFF; 
+    ptr[3] = u32 & 0xFF; 
+    ptr += 4;
+    
     for (int i = 0; i < 3; i++)
     {
         uint32_t u;
         memcpy(&u, &state->hk.GpsPosition[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; ptr[1] = (u >> 16) & 0xFF; ptr[2] = (u >> 8) & 0xFF; ptr[3] = u & 0xFF; ptr += 4;
+        ptr[0] = (u >> 24) & 0xFF; 
+        ptr[1] = (u >> 16) & 0xFF; 
+        ptr[2] = (u >> 8) & 0xFF; 
+        ptr[3] = u & 0xFF; 
+        ptr += 4;
     }
     for (int i = 0; i < 3; i++)
     {
         uint32_t u;
         memcpy(&u, &state->hk.Velocity[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; ptr[1] = (u >> 16) & 0xFF; ptr[2] = (u >> 8) & 0xFF; ptr[3] = u & 0xFF; ptr += 4;
+        ptr[0] = (u >> 24) & 0xFF; 
+        ptr[1] = (u >> 16) & 0xFF; 
+        ptr[2] = (u >> 8) & 0xFF; 
+        ptr[3] = u & 0xFF; 
+        ptr += 4;
     }
 
     /* Attitude source */
@@ -528,14 +543,22 @@ static void send_housekeeping(adcs_sim_state_t* state)
     {
         uint32_t u;
         memcpy(&u, &state->hk.AngRate[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; ptr[1] = (u >> 16) & 0xFF; ptr[2] = (u >> 8) & 0xFF; ptr[3] = u & 0xFF; ptr += 4;
+        ptr[0] = (u >> 24) & 0xFF; 
+        ptr[1] = (u >> 16) & 0xFF; 
+        ptr[2] = (u >> 8) & 0xFF; 
+        ptr[3] = u & 0xFF; 
+        ptr += 4;
     }
 
     for (int i = 0; i < 4; i++)
     {
         uint32_t u;
         memcpy(&u, &state->hk.Quaternion[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; ptr[1] = (u >> 16) & 0xFF; ptr[2] = (u >> 8) & 0xFF; ptr[3] = u & 0xFF; ptr += 4;
+        ptr[0] = (u >> 24) & 0xFF; 
+        ptr[1] = (u >> 16) & 0xFF; 
+        ptr[2] = (u >> 8) & 0xFF; 
+        ptr[3] = u & 0xFF; 
+        ptr += 4;
     }
 
     /* Eclipse */
@@ -546,19 +569,26 @@ static void send_housekeeping(adcs_sim_state_t* state)
     {
         uint32_t u;
         memcpy(&u, &state->hk.SunVectorBody[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; ptr[1] = (u >> 16) & 0xFF; ptr[2] = (u >> 8) & 0xFF; ptr[3] = u & 0xFF; ptr += 4;
+        ptr[0] = (u >> 24) & 0xFF; 
+        ptr[1] = (u >> 16) & 0xFF; 
+        ptr[2] = (u >> 8) & 0xFF; 
+        ptr[3] = u & 0xFF; 
+        ptr += 4;
     }
 
     /* Trailer */
     ptr[0] = ADCS_DEVICE_TRAILER_0;
     ptr[1] = ADCS_DEVICE_TRAILER_1;
 
-    #ifdef ADCS_CFG_DEBUG
-    printf("ADCS SIM: send_housekeeping size=%zu\n", sizeof(response));
+    //#ifdef ADCS_CFG_DEBUG
+    //printf("ADCS SIM: send_housekeeping size=%zu\n", sizeof(response));
     printf("ADCS SIM: send_housekeeping raw: ");
     for (size_t i = 0; i < sizeof(response); ++i) printf("%02X ", response[i]);
     printf("\n");
-    #endif
+    printf("ADCS SIM: sunX=%.3f sunY=%.3f sunZ=%.3f eclipse=%d mode=%d target=%d\n",
+           state->hk.SunVectorBody[0], state->hk.SunVectorBody[1], state->hk.SunVectorBody[2],
+           state->hk.Eclipse, state->hk.Mode, state->hk.Target);
+    //#endif
 
     simulith_transport_send((transport_port_t*)&g_uart_port, response, sizeof(response));
 }

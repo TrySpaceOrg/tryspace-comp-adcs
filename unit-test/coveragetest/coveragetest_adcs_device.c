@@ -56,17 +56,17 @@ void Test_ADCS_RequestData(void)
 {
     uart_info_t              device;
     ADCS_Device_Data_tlm_t data;
-    ADCS_RequestData(&device, &data);
+    ADCS_RequestData(&device, &data, ADCS_DEVICE_GET_CSS_CMD);
 
     uint8_t read_data[] = {0xDE, 0xAD, 0x00, 0x00, 0x00, 0x07, 0x00, 0x06,
                            0x00, 0x0C, 0x00, 0x12, 0x00, 0x00, 0xBE, 0xEF};
     UT_SetDeferredRetcode(UT_KEY(uart_bytes_available), 1, 16);
     UT_SetDeferredRetcode(UT_KEY(uart_read_port), 1, 16);
     UT_SetDataBuffer(UT_KEY(uart_read_port), &read_data, sizeof(read_data), false);
-    ADCS_RequestData(&device, &data);
+    ADCS_RequestData(&device, &data, ADCS_DEVICE_GET_CSS_CMD);
 
     UT_SetDeferredRetcode(UT_KEY(uart_flush), 1, OS_ERROR);
-    ADCS_RequestData(&device, &data);
+    ADCS_RequestData(&device, &data, ADCS_DEVICE_GET_CSS_CMD);
 }
 
 void Test_ADCS_RequestData_Hook(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context, va_list va) {}

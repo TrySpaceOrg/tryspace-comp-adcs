@@ -173,6 +173,10 @@ int32_t ADCS_RequestHK(uart_info_t *device, ADCS_Device_HK_tlm_t *data)
                 data->DeviceCounter = ((uint16_t)ptr[0] << 8) | ptr[1];
                 ptr += 2;
 
+                /* Parse Target (present in simulated device frame) */
+                data->Target = ((uint16_t)ptr[0] << 8) | ptr[1];
+                ptr += 2;
+
                 data->Mode = ptr[0];
                 ptr += 1;
 
