@@ -29,6 +29,7 @@ The specific command format is as follows:
     * 3, nadir point
     * 4, target track
     * 5, inertial point mode
+    * 6, diagnostic (enables override commands)
   * (3) set target
   * ...
   * (10) get CSS data
@@ -71,7 +72,7 @@ This enables direct checkouts these without interference.
 
 ### Flight Software
 The core Flight System (cFS) flight software application receives commands from the software bus.
-Two message IDs exist for commands:
+Two message IDs exist for commands and requests:
 * 0x18D4 - Commands
   * (0) No operation
   * (1) Reset counters
@@ -81,10 +82,17 @@ Two message IDs exist for commands:
   * (5) Set target
 * 0x18D5 - Requests
   * (0) Request housekeeping
-  * (1) Request TBD data
+  * (1) Request CSS data
+  * (2) Request FSS data
+  * (3) Request GPS data
+  * (4) Request IMU data
+  * (5) Request MAG data
+  * (6) Request MTB data
+  * (7) Request RW data
+  * (8) Request ST data
 
-Two message IDs exist for telemetry:
-* 0x08D4 - Application Housekeeping
+Multiple message IDs exist for telemetry:
+* 0x08D4 - Housekeeping
 * 0x08D5 - CSS data
 * 0x08D6 - FSS data
 * 0x08D7 - GPS data

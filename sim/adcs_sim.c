@@ -580,15 +580,14 @@ static void send_housekeeping(adcs_sim_state_t* state)
     ptr[0] = ADCS_DEVICE_TRAILER_0;
     ptr[1] = ADCS_DEVICE_TRAILER_1;
 
-    //#ifdef ADCS_CFG_DEBUG
-    //printf("ADCS SIM: send_housekeeping size=%zu\n", sizeof(response));
-    printf("ADCS SIM: send_housekeeping raw: ");
+    #ifdef ADCS_CFG_DEBUG
+    printf("ADCS SIM: send_housekeeping raw[%zu]: ", sizeof(response));
     for (size_t i = 0; i < sizeof(response); ++i) printf("%02X ", response[i]);
     printf("\n");
     printf("ADCS SIM: sunX=%.3f sunY=%.3f sunZ=%.3f eclipse=%d mode=%d target=%d\n",
            state->hk.SunVectorBody[0], state->hk.SunVectorBody[1], state->hk.SunVectorBody[2],
            state->hk.Eclipse, state->hk.Mode, state->hk.Target);
-    //#endif
+    #endif
 
     simulith_transport_send((transport_port_t*)&g_uart_port, response, sizeof(response));
 }

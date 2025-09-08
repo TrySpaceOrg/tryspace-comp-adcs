@@ -159,12 +159,6 @@ int32 ADCS_AppInit(void)
     ADCS_AppData.HkTelemetryPkt.DeviceCount      = 0;
     ADCS_AppData.HkTelemetryPkt.DeviceEnabled    = ADCS_DEVICE_DISABLED;
 
-    /* 
-    ** Enable the device by default
-    ** This may not be applicable to all applications, but is included here as an example
-    */
-    ADCS_Enable();
-
     /*
     ** Send an information event that the app has initialized.
     ** This is useful for debugging the loading of individual applications.
@@ -307,22 +301,35 @@ void ADCS_ProcessGroundCommand(void)
 
         case ADCS_SET_MODE_CC:
             if (ADCS_VerifyCmdLength(ADCS_AppData.MsgPtr, sizeof(ADCS_SetMode_cmd_t)) == OS_SUCCESS)
+            {
+                /* Check that device is enabled */
+                if (ADCS_AppData.HkTelemetryPkt.DeviceEnabled == ADCS_DEVICE_ENABLED)
                 {
                     /* Safely interpret the received SB message as the command struct */
                     ADCS_SetMode_cmd_t *cmd = (ADCS_SetMode_cmd_t *)ADCS_AppData.MsgPtr;
                     uint16 mode = cmd->Mode;
                     int32 status = ADCS_CommandDevice(&ADCS_AppData.AdcsUart, ADCS_DEVICE_SET_MODE_CMD, mode);
-                if (status == OS_SUCCESS)
-                {
-                    ADCS_AppData.HkTelemetryPkt.CommandCount++;
-                    CFE_EVS_SendEvent(ADCS_CMD_CONFIG_INF_EID, CFE_EVS_EventType_INFORMATION,
-                                      "ADCS: Set mode command forwarded to device (mode=%u)", mode);
+                    if (status == OS_SUCCESS)
+                    {
+                        ADCS_AppData.HkTelemetryPkt.CommandCount++;
+                        CFE_EVS_SendEvent(ADCS_SET_MODE_INF_EID, CFE_EVS_EventType_INFORMATION,
+                                        "ADCS: Set mode command forwarded to device (mode=%u)", mode);
+                    }
+                    else
+                    {
+                        ADCS_AppData.HkTelemetryPkt.CommandErrorCount++;
+                        CFE_EVS_SendEvent(ADCS_SET_MODE_ERR_EID, CFE_EVS_EventType_ERROR,
+                                        "ADCS: Set mode device command failed: %d", status);
+                    }
                 }
                 else
                 {
+                    /* Increment command error count */
                     ADCS_AppData.HkTelemetryPkt.CommandErrorCount++;
-                    CFE_EVS_SendEvent(ADCS_CMD_CONFIG_DEV_ERR_EID, CFE_EVS_EventType_ERROR,
-                                      "ADCS: Set mode device command failed: %d", status);
+
+                    /* Send command event failure to the console */
+                    CFE_EVS_SendEvent(ADCS_CMD_DISABLED_ERR_EID, CFE_EVS_EventType_ERROR,
+                                      "ADCS: Set mode command failed, device not enabled");
                 }
             }
             break;
@@ -330,41 +337,33 @@ void ADCS_ProcessGroundCommand(void)
         case ADCS_SET_TARGET_CC:
             if (ADCS_VerifyCmdLength(ADCS_AppData.MsgPtr, sizeof(ADCS_SetTarget_cmd_t)) == OS_SUCCESS)
             {
-                ADCS_SetTarget_cmd_t *tcmd = (ADCS_SetTarget_cmd_t *)ADCS_AppData.MsgPtr;
-                uint16 target = tcmd->Target;
-                int32 status = ADCS_CommandDevice(&ADCS_AppData.AdcsUart, ADCS_DEVICE_SET_TARGET_CMD, target);
-                if (status == OS_SUCCESS)
+                /* Check that device is enabled */
+                if (ADCS_AppData.HkTelemetryPkt.DeviceEnabled == ADCS_DEVICE_ENABLED)
                 {
-                    ADCS_AppData.HkTelemetryPkt.CommandCount++;
-                    CFE_EVS_SendEvent(ADCS_CMD_CONFIG_INF_EID, CFE_EVS_EventType_INFORMATION,
-                                      "ADCS: Set target command forwarded to device (target=%u)", target);
+                    ADCS_SetTarget_cmd_t *tcmd = (ADCS_SetTarget_cmd_t *)ADCS_AppData.MsgPtr;
+                    uint16 target = tcmd->Target;
+                    int32 status = ADCS_CommandDevice(&ADCS_AppData.AdcsUart, ADCS_DEVICE_SET_TARGET_CMD, target);
+                    if (status == OS_SUCCESS)
+                    {
+                        ADCS_AppData.HkTelemetryPkt.CommandCount++;
+                        CFE_EVS_SendEvent(ADCS_SET_TARGET_INF_EID, CFE_EVS_EventType_INFORMATION,
+                                        "ADCS: Set target command forwarded to device (target=%u)", target);
+                    }
+                    else
+                    {
+                        ADCS_AppData.HkTelemetryPkt.CommandErrorCount++;
+                        CFE_EVS_SendEvent(ADCS_SET_TARGET_ERR_EID, CFE_EVS_EventType_ERROR,
+                                        "ADCS: Set target device command failed: %d", status);
+                    }
                 }
                 else
                 {
+                    /* Increment command error count */
                     ADCS_AppData.HkTelemetryPkt.CommandErrorCount++;
-                    CFE_EVS_SendEvent(ADCS_CMD_CONFIG_DEV_ERR_EID, CFE_EVS_EventType_ERROR,
-                                      "ADCS: Set target device command failed: %d", status);
-                }
-            }
-            break;
 
-        case ADCS_GET_CSS_CC:
-            if (ADCS_VerifyCmdLength(ADCS_AppData.MsgPtr, sizeof(ADCS_NoArgs_cmd_t)) == OS_SUCCESS)
-            {
-                int32 status = ADCS_RequestData(&ADCS_AppData.AdcsUart,
-                                                (ADCS_Device_Data_tlm_t *)&ADCS_AppData.DevicePkt.Adcs,
-                                                ADCS_DEVICE_GET_CSS_CMD);
-                if (status == OS_SUCCESS)
-                {
-                    ADCS_AppData.HkTelemetryPkt.DeviceCount++;
-                    CFE_EVS_SendEvent(ADCS_CMD_CONFIG_INF_EID, CFE_EVS_EventType_INFORMATION,
-                                      "ADCS: CSS data request forwarded to device");
-                }
-                else
-                {
-                    ADCS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-                    CFE_EVS_SendEvent(ADCS_REQ_DATA_ERR_EID, CFE_EVS_EventType_ERROR,
-                                      "ADCS: CSS data request failed: %d", status);
+                    /* Send command event failure to the console */
+                    CFE_EVS_SendEvent(ADCS_CMD_DISABLED_ERR_EID, CFE_EVS_EventType_ERROR,
+                                      "ADCS: Set mode command failed, device not enabled");
                 }
             }
             break;
@@ -404,7 +403,35 @@ void ADCS_ProcessTelemetryRequest(void)
             ADCS_ReportHousekeeping();
             break;
 
-        case ADCS_REQ_DATA_TLM:
+        case ADCS_REQ_CSS_TLM:
+            ADCS_ReportDeviceTelemetry();
+            break;
+
+        case ADCS_REQ_FSS_TLM:
+            ADCS_ReportDeviceTelemetry();
+            break;
+        
+        case ADCS_REQ_GPS_TLM:
+            ADCS_ReportDeviceTelemetry();
+            break;
+
+        case ADCS_REQ_IMU_TLM:
+            ADCS_ReportDeviceTelemetry();
+            break;
+
+        case ADCS_REQ_MAG_TLM:
+            ADCS_ReportDeviceTelemetry();
+            break;
+
+        case ADCS_REQ_MTB_TLM:
+            ADCS_ReportDeviceTelemetry();
+            break;
+
+        case ADCS_REQ_RW_TLM:
+            ADCS_ReportDeviceTelemetry();
+            break;
+
+        case ADCS_REQ_ST_TLM:
             ADCS_ReportDeviceTelemetry();
             break;
 
@@ -446,6 +473,11 @@ void ADCS_ReportHousekeeping(void)
             CFE_EVS_SendEvent(ADCS_REQ_HK_ERR_EID, CFE_EVS_EventType_ERROR,
                               "ADCS: Request device HK reported error %d", status);
         }
+    }
+    else
+    {
+        /* Clear DeviceHK when no live data is available */
+        memset(&ADCS_AppData.HkTelemetryPkt.DeviceHK, 0, sizeof(ADCS_Device_HK_tlm_t));
     }
     /* Intentionally do not report errors if disabled */
 

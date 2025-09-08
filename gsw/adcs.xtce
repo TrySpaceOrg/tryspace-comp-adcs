@@ -59,30 +59,30 @@
       <xtce:Parameter name="DEVICE_ENABLED" parameterTypeRef="UINT8_Type"/>
 
       <!-- Device HK fields (matches ADCS_Device_HK_tlm_t struct layout) -->
-  <!-- NOTE: In the cFE HK packet, multi-byte fields are in host (little-endian) order -->
-  <xtce:Parameter name="DEVICE_COUNTER" parameterTypeRef="UINT16_Type"/>
-  <xtce:Parameter name="TARGET" parameterTypeRef="UINT16_Type"/>
-      <xtce:Parameter name="MODE" parameterTypeRef="UINT8_Type"/>
-  <xtce:Parameter name="GPS_SECONDS" parameterTypeRef="UINT32_LE_Type"/>
-  <xtce:Parameter name="GPS_SUBSECONDS" parameterTypeRef="UINT32_LE_Type"/>
-  <xtce:Parameter name="GPS_POS_X" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="GPS_POS_Y" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="GPS_POS_Z" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="VEL_X" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="VEL_Y" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="VEL_Z" parameterTypeRef="FLOAT32_LE_Type"/>
-      <xtce:Parameter name="ATTITUDE_SOURCE" parameterTypeRef="UINT8_Type"/>
-  <xtce:Parameter name="ANGRATE_X" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="ANGRATE_Y" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="ANGRATE_Z" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="QUAT_0" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="QUAT_1" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="QUAT_2" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="QUAT_3" parameterTypeRef="FLOAT32_LE_Type"/>
-      <xtce:Parameter name="ECLIPSE" parameterTypeRef="UINT8_Type"/>
-  <xtce:Parameter name="SUN_X" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="SUN_Y" parameterTypeRef="FLOAT32_LE_Type"/>
-  <xtce:Parameter name="SUN_Z" parameterTypeRef="FLOAT32_LE_Type"/>
+      <!-- NOTE: In the cFE HK packet, multi-byte fields are in host (little-endian) order -->
+      <xtce:Parameter name="DEVICE_COUNTER" parameterTypeRef="UINT16_Type"/>
+      <xtce:Parameter name="TARGET" parameterTypeRef="UINT16_Type"/>
+          <xtce:Parameter name="MODE" parameterTypeRef="UINT8_Type"/>
+      <xtce:Parameter name="GPS_SECONDS" parameterTypeRef="UINT32_LE_Type"/>
+      <xtce:Parameter name="GPS_SUBSECONDS" parameterTypeRef="UINT32_LE_Type"/>
+      <xtce:Parameter name="GPS_POS_X" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="GPS_POS_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="GPS_POS_Z" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="VEL_X" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="VEL_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="VEL_Z" parameterTypeRef="FLOAT32_LE_Type"/>
+          <xtce:Parameter name="ATTITUDE_SOURCE" parameterTypeRef="UINT8_Type"/>
+      <xtce:Parameter name="ANGRATE_X" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="ANGRATE_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="ANGRATE_Z" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="QUAT_0" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="QUAT_1" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="QUAT_2" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="QUAT_3" parameterTypeRef="FLOAT32_LE_Type"/>
+          <xtce:Parameter name="ECLIPSE" parameterTypeRef="UINT8_Type"/>
+      <xtce:Parameter name="SUN_X" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="SUN_Y" parameterTypeRef="FLOAT32_LE_Type"/>
+      <xtce:Parameter name="SUN_Z" parameterTypeRef="FLOAT32_LE_Type"/>
     </xtce:ParameterSet>
 
     <xtce:ContainerSet>
