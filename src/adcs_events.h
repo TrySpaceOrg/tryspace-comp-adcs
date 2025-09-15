@@ -11,19 +11,20 @@
 #define ADCS_PROCESS_CMD_ERR_EID 6
 
 /* Standard command event IDs */
-#define ADCS_CMD_ERR_EID         10
-#define ADCS_CMD_NOOP_INF_EID    11
-#define ADCS_CMD_RESET_INF_EID   12
-#define ADCS_ENABLE_INF_EID      13
-#define ADCS_ENABLE_ERR_EID      14
-#define ADCS_DISABLE_INF_EID     15
-#define ADCS_DISABLE_ERR_EID     16
+#define ADCS_CMD_ERR_EID          10
+#define ADCS_CMD_NOOP_INF_EID     11
+#define ADCS_CMD_RESET_INF_EID    12
+#define ADCS_ENABLE_INF_EID       13
+#define ADCS_ENABLE_ERR_EID       14
+#define ADCS_DISABLE_INF_EID      15
+#define ADCS_DISABLE_ERR_EID      16
+#define ADCS_CMD_DISABLED_ERR_EID 17
 
 /* Device specific command event IDs */
-#define ADCS_CMD_CONFIG_EN_ERR_EID  20
-#define ADCS_CMD_CONFIG_VAL_ERR_EID 21
-#define ADCS_CMD_CONFIG_INF_EID     22
-#define ADCS_CMD_CONFIG_DEV_ERR_EID 23
+#define ADCS_SET_MODE_INF_EID    20
+#define ADCS_SET_MODE_ERR_EID    21
+#define ADCS_SET_TARGET_INF_EID  22
+#define ADCS_SET_TARGET_ERR_EID  23
 
 /* Hardware protocol event IDs */
 #define ADCS_UART_INIT_ERR_EID  30

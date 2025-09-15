@@ -227,7 +227,7 @@ void Test_ADCS_ProcessTelemetryRequest(void)
     CFE_SB_MsgId_t    TestMsgId;
     UT_CheckEvent_t   EventTest;
     CFE_MSG_FcnCode_t FcnCode;
-    FcnCode = ADCS_REQ_DATA_TLM;
+    FcnCode = ADCS_REQ_CSS_TLM;
 
     TestMsgId = CFE_SB_ValueToMsgId(ADCS_CMD_MID);
     UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);

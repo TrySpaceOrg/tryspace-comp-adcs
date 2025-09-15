@@ -14,13 +14,19 @@
 #define ADCS_CONFIG_CC         4
 #define ADCS_SET_MODE_CC       5
 #define ADCS_SET_TARGET_CC     6
-#define ADCS_GET_CSS_CC        7
 
 /*
 ** Telemetry Request Command Codes
 */
 #define ADCS_REQ_HK_TLM   0
-#define ADCS_REQ_DATA_TLM 1
+#define ADCS_REQ_CSS_TLM  1
+#define ADCS_REQ_FSS_TLM  2
+#define ADCS_REQ_GPS_TLM  3
+#define ADCS_REQ_IMU_TLM  4
+#define ADCS_REQ_MAG_TLM  5
+#define ADCS_REQ_MTB_TLM  6
+#define ADCS_REQ_RW_TLM   7
+#define ADCS_REQ_ST_TLM   8
 
 /*
 ** Generic "no arguments" command type definition
