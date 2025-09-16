@@ -15,9 +15,6 @@ int32_t ADCS_ReadData(uart_info_t *device, uint8_t *read_data, uint8_t data_leng
      * the simulator more time to schedule component ticks and transport polling.
      */
     int32_t timeout_limit = ADCS_CFG_MS_TIMEOUT;
-#ifdef ADCS_CFG_DEBUG
-    timeout_limit = ADCS_CFG_MS_TIMEOUT * 10;
-#endif
 
     /* Wait until all data received or timeout occurs */
     bytes_available = uart_bytes_available(device);

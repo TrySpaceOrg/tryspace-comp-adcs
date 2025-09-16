@@ -46,7 +46,7 @@ void print_help(void)
 int get_command(const char *str)
 {
     int  status = CMD_UNKNOWN;
-    char lcmd[MAX_INPUT_TOKEN_SIZE];
+    char lcmd[MAX_INPUT_TOKEN_SIZE + 1];
     strncpy(lcmd, str, MAX_INPUT_TOKEN_SIZE);
 
     /* Convert command to lower case */
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
     int     num_input_tokens;
     int     cmd;
     char   *token_ptr;
-    uint8_t run_status = OS_SUCCESS;
+    int     run_status = OS_SUCCESS;
 
     /* Initialize UART */
     AdcsUart.deviceString = ADCS_CFG_STRING;
@@ -264,7 +264,13 @@ int main(int argc, char *argv[])
 
         /* Read user input */
         printf(PROMPT);
-        fgets(input_buf, MAX_INPUT_BUF, stdin);
+        if (fgets(input_buf, MAX_INPUT_BUF, stdin) == NULL)
+        {
+            /* EOF or error on stdin - exit the loop */
+            OS_printf("End of input or read error, exiting...\n");
+            run_status = OS_ERROR;
+            break;
+        }
 
         /* Tokenize line buffer */
         token_ptr = strtok(input_buf, " \t\n");
@@ -320,7 +326,7 @@ void to_lower(char *str)
     char *ptr = str;
     while (*ptr)
     {
-        *ptr = tolower((unsigned char)*ptr);
+        *ptr = (char) tolower((unsigned char)*ptr);
         ptr++;
     }
     return;

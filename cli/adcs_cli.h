@@ -5,6 +5,9 @@
 #ifndef _ADCS_CLI_H_
 #define _ADCS_CLI_H_
 
+/*
+** Includes
+*/
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -23,12 +26,17 @@
 #include "simulith_transport.h"
 #endif
 
+/*
+** Standard Defines
+*/
 #define PROMPT               "adcs> "
 #define MAX_INPUT_BUF        512
 #define MAX_INPUT_TOKENS     64
 #define MAX_INPUT_TOKEN_SIZE 50
 
-/* Command Defines */
+/*
+** Command Defines
+*/
 #define CMD_UNKNOWN -1
 #define CMD_HELP     0
 #define CMD_EXIT     1
@@ -39,12 +47,13 @@
 #define CMD_SET_TARGET 6
 #define CMD_GET_CSS  7
 
-/* Prototypes */
+/*
+** Prototypes
+*/
 void print_help(void);
 int  get_command(const char *str);
+int  process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_INPUT_TOKEN_SIZE]);
 int  main(int argc, char *argv[]);
-
-/* Generic Prototypes */
 int  check_number_arguments(int actual, int expected);
 void to_lower(char *str);
 
