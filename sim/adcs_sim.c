@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Forward declarations for component registration exports so -Wmissing-prototypes is happy
+    (the REGISTER_COMPONENT macro expands to an exported getter symbol). */
+const component_interface_t* get_adcs_sim_component_interface(void);
+const component_interface_t* get_component_interface(void);
+
 // Globals
 static adcs_sim_state_t* g_state = NULL;
 static transport_port_t g_uart_port = {0};
@@ -213,8 +218,8 @@ static void adcs_hybrid_sun_pointing_controller(adcs_sim_state_t* state, const s
         #endif
         // In eclipse, just do rate damping with MTBs
         adcs_bdot_controller(state, context_42);
-        double zero_torques[4] = {0.0, 0.0, 0.0, 0.0};
-        simulith_42_send_wheel_command(0, zero_torques, 0x07);
+        double zero_torques_local[4] = {0.0, 0.0, 0.0, 0.0};
+        simulith_42_send_wheel_command(0, zero_torques_local, 0x07);
         return;
     }
     
@@ -433,7 +438,7 @@ static void adcs_controller_update(adcs_sim_state_t* state, const simulith_42_co
             printf("ADCS CONTROLLER: B-dot detumble mode\n");
             #endif
             adcs_bdot_controller(state, context_42);
-            double zero_torques[4] = {0.0, 0.0, 0.0, 0.0};
+            /* reuse zero_torques declared at function scope */
             simulith_42_send_wheel_command(0, zero_torques, 0x00);
             break;
             
@@ -486,13 +491,13 @@ static void send_housekeeping(adcs_sim_state_t* state)
     ptr += 2;
 
     /* DeviceCounter (uint16 big-endian) */
-    ptr[0] = (state->hk.DeviceCounter >> 8) & 0xFF;
-    ptr[1] = state->hk.DeviceCounter & 0xFF;
+    ptr[0] = (uint8_t)((state->hk.DeviceCounter >> 8) & 0xFF);
+    ptr[1] = (uint8_t)(state->hk.DeviceCounter & 0xFF);
     ptr += 2;
 
     /* Target (uint16 big-endian) */
-    ptr[0] = (state->hk.Target >> 8) & 0xFF;
-    ptr[1] = state->hk.Target & 0xFF;
+    ptr[0] = (uint8_t)((state->hk.Target >> 8) & 0xFF);
+    ptr[1] = (uint8_t)(state->hk.Target & 0xFF);
     ptr += 2;
 
     /* Mode (uint8) */
@@ -502,51 +507,51 @@ static void send_housekeeping(adcs_sim_state_t* state)
     /* GpsSeconds, GpsSubseconds (uint32 big-endian) */
     uint32_t u32;
     u32 = state->hk.GpsSeconds;
-    ptr[0] = (u32 >> 24) & 0xFF; 
-    ptr[1] = (u32 >> 16) & 0xFF; 
-    ptr[2] = (u32 >> 8) & 0xFF; 
-    ptr[3] = u32 & 0xFF; 
+    ptr[0] = (uint8_t)((u32 >> 24) & 0xFF); 
+    ptr[1] = (uint8_t)((u32 >> 16) & 0xFF); 
+    ptr[2] = (uint8_t)((u32 >> 8) & 0xFF); 
+    ptr[3] = (uint8_t)(u32 & 0xFF); 
     ptr += 4;
     u32 = state->hk.GpsSubseconds;
-    ptr[0] = (u32 >> 24) & 0xFF; 
-    ptr[1] = (u32 >> 16) & 0xFF; 
-    ptr[2] = (u32 >> 8) & 0xFF; 
-    ptr[3] = u32 & 0xFF; 
+    ptr[0] = (uint8_t)((u32 >> 24) & 0xFF); 
+    ptr[1] = (uint8_t)((u32 >> 16) & 0xFF); 
+    ptr[2] = (uint8_t)((u32 >> 8) & 0xFF); 
+    ptr[3] = (uint8_t)(u32 & 0xFF); 
     ptr += 4;
     
     for (int i = 0; i < 3; i++)
     {
         uint32_t u;
         memcpy(&u, &state->hk.GpsPosition[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; 
-        ptr[1] = (u >> 16) & 0xFF; 
-        ptr[2] = (u >> 8) & 0xFF; 
-        ptr[3] = u & 0xFF; 
+        ptr[0] = (uint8_t)((u >> 24) & 0xFF); 
+        ptr[1] = (uint8_t)((u >> 16) & 0xFF); 
+        ptr[2] = (uint8_t)((u >> 8) & 0xFF); 
+        ptr[3] = (uint8_t)(u & 0xFF); 
         ptr += 4;
     }
     for (int i = 0; i < 3; i++)
     {
         uint32_t u;
         memcpy(&u, &state->hk.Velocity[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; 
-        ptr[1] = (u >> 16) & 0xFF; 
-        ptr[2] = (u >> 8) & 0xFF; 
-        ptr[3] = u & 0xFF; 
+        ptr[0] = (uint8_t)((u >> 24) & 0xFF); 
+        ptr[1] = (uint8_t)((u >> 16) & 0xFF); 
+        ptr[2] = (uint8_t)((u >> 8) & 0xFF); 
+        ptr[3] = (uint8_t)(u & 0xFF); 
         ptr += 4;
     }
 
     /* Attitude source */
-    ptr[0] = state->hk.AttitudeSource;
+    ptr[0] = (uint8_t)state->hk.AttitudeSource;
     ptr += 1;
 
     for (int i = 0; i < 3; i++)
     {
         uint32_t u;
         memcpy(&u, &state->hk.AngRate[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; 
-        ptr[1] = (u >> 16) & 0xFF; 
-        ptr[2] = (u >> 8) & 0xFF; 
-        ptr[3] = u & 0xFF; 
+        ptr[0] = (uint8_t)((u >> 24) & 0xFF); 
+        ptr[1] = (uint8_t)((u >> 16) & 0xFF); 
+        ptr[2] = (uint8_t)((u >> 8) & 0xFF); 
+        ptr[3] = (uint8_t)(u & 0xFF); 
         ptr += 4;
     }
 
@@ -554,31 +559,31 @@ static void send_housekeeping(adcs_sim_state_t* state)
     {
         uint32_t u;
         memcpy(&u, &state->hk.Quaternion[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; 
-        ptr[1] = (u >> 16) & 0xFF; 
-        ptr[2] = (u >> 8) & 0xFF; 
-        ptr[3] = u & 0xFF; 
+        ptr[0] = (uint8_t)((u >> 24) & 0xFF); 
+        ptr[1] = (uint8_t)((u >> 16) & 0xFF); 
+        ptr[2] = (uint8_t)((u >> 8) & 0xFF); 
+        ptr[3] = (uint8_t)(u & 0xFF); 
         ptr += 4;
     }
 
     /* Eclipse */
-    ptr[0] = state->hk.Eclipse;
+    ptr[0] = (uint8_t)state->hk.Eclipse;
     ptr += 1;
 
     for (int i = 0; i < 3; i++)
     {
         uint32_t u;
         memcpy(&u, &state->hk.SunVectorBody[i], sizeof(u));
-        ptr[0] = (u >> 24) & 0xFF; 
-        ptr[1] = (u >> 16) & 0xFF; 
-        ptr[2] = (u >> 8) & 0xFF; 
-        ptr[3] = u & 0xFF; 
+        ptr[0] = (uint8_t)((u >> 24) & 0xFF); 
+        ptr[1] = (uint8_t)((u >> 16) & 0xFF); 
+        ptr[2] = (uint8_t)((u >> 8) & 0xFF); 
+        ptr[3] = (uint8_t)(u & 0xFF); 
         ptr += 4;
     }
 
     /* Trailer */
-    ptr[0] = ADCS_DEVICE_TRAILER_0;
-    ptr[1] = ADCS_DEVICE_TRAILER_1;
+    ptr[0] = (uint8_t)ADCS_DEVICE_TRAILER_0;
+    ptr[1] = (uint8_t)ADCS_DEVICE_TRAILER_1;
 
     #ifdef ADCS_CFG_DEBUG
     printf("ADCS SIM: send_housekeeping raw[%zu]: ", sizeof(response));
@@ -589,7 +594,7 @@ static void send_housekeeping(adcs_sim_state_t* state)
            state->hk.Eclipse, state->hk.Mode, state->hk.Target);
     #endif
 
-    simulith_transport_send((transport_port_t*)&g_uart_port, response, sizeof(response));
+    simulith_transport_send((transport_port_t*)&g_uart_port, response, (size_t)sizeof(response));
 }
 
 static void send_adcs_data(adcs_sim_state_t* state)
@@ -598,15 +603,15 @@ static void send_adcs_data(adcs_sim_state_t* state)
     uint8_t response[10];
     response[0] = ADCS_DEVICE_HDR_0;
     response[1] = ADCS_DEVICE_HDR_1;
-    response[2] = (state->data.Chan1 >> 8) & 0xFF;
-    response[3] = state->data.Chan1 & 0xFF;
-    response[4] = (state->data.Chan2 >> 8) & 0xFF;
-    response[5] = state->data.Chan2 & 0xFF;
-    response[6] = (state->data.Chan3 >> 8) & 0xFF;
-    response[7] = state->data.Chan3 & 0xFF;
+    response[2] = (uint8_t)((state->data.Chan1 >> 8) & 0xFF);
+    response[3] = (uint8_t)(state->data.Chan1 & 0xFF);
+    response[4] = (uint8_t)((state->data.Chan2 >> 8) & 0xFF);
+    response[5] = (uint8_t)(state->data.Chan2 & 0xFF);
+    response[6] = (uint8_t)((state->data.Chan3 >> 8) & 0xFF);
+    response[7] = (uint8_t)(state->data.Chan3 & 0xFF);
     response[8] = ADCS_DEVICE_TRAILER_0;
     response[9] = ADCS_DEVICE_TRAILER_1;
-    simulith_transport_send((transport_port_t*)&g_uart_port, response, sizeof(response));
+    simulith_transport_send((transport_port_t*)&g_uart_port, response, (size_t)sizeof(response));
 }
 
 static void handle_command(adcs_sim_state_t* state, const uint8_t* data, size_t length)
@@ -680,7 +685,7 @@ static void handle_command(adcs_sim_state_t* state, const uint8_t* data, size_t 
             printf("ADCS SIM: Processing SET_MODE command with payload %u\n", payload);
             #endif
             /* Store mode in hk.Mode and update controller */
-            state->hk.Mode = payload & 0xFF;
+            state->hk.Mode = (uint8_t)(payload & 0xFF);
             state->current_mode = state->hk.Mode;
             
             // Activate/deactivate controller based on mode
@@ -735,7 +740,7 @@ static void adcs_sim_on_tick(uint64_t tick_time_ns, const simulith_42_context_t*
     if (!g_state) return;
     
     // Convert nanoseconds to seconds
-    double current_time = tick_time_ns / 1e9;
+    double current_time = (double)tick_time_ns / 1e9;
     
     // Run ADCS controller if active
     adcs_controller_update(g_state, context_42, current_time);
@@ -788,8 +793,8 @@ static void adcs_sim_on_tick(uint64_t tick_time_ns, const simulith_42_context_t*
     bytes = simulith_transport_available((transport_port_t*)&g_uart_port);
     if (bytes > 0)
     {
-        // Read UART
-        bytes = simulith_transport_receive((transport_port_t*)&g_uart_port, data, sizeof(data));
+    // Read UART
+    bytes = simulith_transport_receive((transport_port_t*)&g_uart_port, data, sizeof(data));
 
         #ifdef ADCS_CFG_DEBUG
         printf("ADCS SIM: Received %d bytes from UART\n", bytes);
@@ -800,8 +805,8 @@ static void adcs_sim_on_tick(uint64_t tick_time_ns, const simulith_42_context_t*
         printf("\n");
         #endif
 
-        // Process the command
-        handle_command(g_state, data, bytes);
+    // Process the command (cast bytes to size_t)
+    handle_command(g_state, data, (size_t)bytes);
     }
 }
 

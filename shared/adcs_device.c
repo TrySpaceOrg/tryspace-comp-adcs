@@ -15,9 +15,6 @@ int32_t ADCS_ReadData(uart_info_t *device, uint8_t *read_data, uint8_t data_leng
      * the simulator more time to schedule component ticks and transport polling.
      */
     int32_t timeout_limit = ADCS_CFG_MS_TIMEOUT;
-#ifdef ADCS_CFG_DEBUG
-    timeout_limit = ADCS_CFG_MS_TIMEOUT * 10;
-#endif
 
     /* Wait until all data received or timeout occurs */
     bytes_available = uart_bytes_available(device);
@@ -37,7 +34,7 @@ int32_t ADCS_ReadData(uart_info_t *device, uint8_t *read_data, uint8_t data_leng
         }
 
         /* Read data */
-        bytes = uart_read_port(device, read_data, bytes_available);
+        bytes = uart_read_port(device, read_data, (uint32_t)bytes_available);
         if (bytes != bytes_available)
         {
             OS_printf("  ADCS_ReadData: Bytes read != to requested! read=%d expected=%d\n", bytes, bytes_available);
@@ -69,10 +66,10 @@ int32_t ADCS_CommandDevice(uart_info_t *device, uint16_t cmd_code, uint16_t payl
     /* Prepare command */
     write_data[0] = ADCS_DEVICE_HDR_0;
     write_data[1] = ADCS_DEVICE_HDR_1;
-    write_data[2] = cmd_code >> 8;
-    write_data[3] = cmd_code;
-    write_data[4] = payload >> 8;
-    write_data[5] = payload;
+    write_data[2] = (uint8_t)(cmd_code >> 8);
+    write_data[3] = (uint8_t)(cmd_code & 0xFF);
+    write_data[4] = (uint8_t)(payload >> 8);
+    write_data[5] = (uint8_t)(payload & 0xFF);
     write_data[6] = ADCS_DEVICE_TRAILER_0;
     write_data[7] = ADCS_DEVICE_TRAILER_1;
 
